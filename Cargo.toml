@@ -1,0 +1,8 @@
+[package]
+name = "regex-replace"
+version = "0.1.0"
+authors = ["Gregory Meyer <gregjm@umich.edu>"]
+
+[dependencies]
+regex = "0.2"
+clap = "2.31"

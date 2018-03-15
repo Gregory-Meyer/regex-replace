@@ -3,7 +3,6 @@ extern crate clap;
 use std::error::Error;
 use std::io::{Read, Write};
 
-static EXIT_SUCCESS: i32 = 0;
 static EXIT_FAILURE: i32 = 1;
 
 struct NamedFile {
@@ -37,6 +36,7 @@ fn open_files(input_filename: &str, output_filename: &str)
 
 fn read_contents(mut file: NamedFile) -> String {
     let mut contents = String::new();
+
     match file.file.read_to_string(&mut contents) {
         Ok(count) => println!("read {} bytes from '{}'", count,
                               file.filename),
@@ -65,12 +65,14 @@ fn write_buffer(mut file: NamedFile, buffer: &[u8]) {
 fn replace(text: &str, to_find: &str, replacement: &str) -> String {
     let mut replaced = String::with_capacity(text.len() * 3 / 2);
 
-    for (index, substring) in text.split(to_find).enumerate() {
-        if index != 0 {
+    let mut first = true;
+    for to_push in text.split(to_find) {
+        if first {
             replaced.push_str(replacement);
+            first = false;
         }
 
-        replaced.push_str(substring);
+        replaced.push_str(to_push);
     }
 
     replaced

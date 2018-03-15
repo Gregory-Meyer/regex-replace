@@ -5,28 +5,13 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <string_view>
 
 std::string read_buffer(std::istream &is) {
-    std::string contents;
-    std::string::size_type size = 0;
-
-    while (is) {
-        const auto available = is.rdbuf()->in_avail();
-
-        if (available == 0) {
-            break;
-        }
-
-        const auto end_index = size;
-        contents.resize(size += available);
-        const auto data_end = contents.data() + end_index;
-
-        is.rdbuf()->sgetn(data_end, available);
-    }
-
-    return contents;
+    return std::string{ std::istreambuf_iterator<char>{ is },
+                        std::istreambuf_iterator<char>{ } };
 }
 
 std::string replace_commas(std::string_view text) {
@@ -82,6 +67,16 @@ int main(const int argc, const char *const argv[]) {
 
     std::ifstream ifs{ input_filename };
     std::ofstream ofs{ output_filename };
+
+    if (not ifs.is_open()) {
+        std::cerr << "error: unable to open '" << input_filename << "'"
+            << std::endl;
+        std::exit(EXIT_FAILURE);
+    } else if (not ofs.is_open()) {
+        std::cerr << "error: unable to open '" << output_filename << "'"
+            << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 
     const std::string contents = read_buffer(ifs);
 

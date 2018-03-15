@@ -1,20 +1,26 @@
+#include <algorithm>
+
 #include <string>  
+#include <cstring>  
 #include <stdlib.h>
 #include <stdio.h>
 #include "time.h"
 
+#include <chrono>
+
+using namespace std;
+
 void GetLen(FILE * fp, int &len);
-void ChangeExtension(char *fname, char *newExt);
+void ChangeExtension(char *fname, const char *newExt);
 int StrReplace(char *target, const char *needle, const char *replacement, int len);
 void CPPReplace(std::string &data);
 
 int main(int c, char**v)
 {
-    FILE *fp = NULL;
+    FILE *fp = stdin;
     int len = 0;
     char *buf = NULL;
     char fname[256];
-    time_t totalC = 0, totalCPP = 0;
 
     if (c < 2)
     {
@@ -25,7 +31,7 @@ int main(int c, char**v)
 
     for (int i = 1; i < c; i++)
     {
-        fopen_s(&fp, v[i], "r");
+        fp = fopen(v[i], "r");
         GetLen(fp, len);
         buf = (char*)calloc(1, len * 2);
         if (!buf)
@@ -36,49 +42,32 @@ int main(int c, char**v)
 
         fread(buf, len, 1, fp);
         fclose(fp);
-        std::string data = buf;
-        time_t start, end;
-        puts("Starting with std::string");
-        start = clock();//predefined  function in c
-        CPPReplace(data);
-        end = clock();
-        totalCPP += end - start;
-        printf("CPP Runtime in mSecs: %lld\n", end - start);
-        puts("Starting with C stdlib functions");
-        start = clock();//predefined  function in c
-        int result = StrReplace(buf, v[1], ",\n", len * 2);
+        // std::string data = buf;
+        const auto start = std::chrono::high_resolution_clock::now();
+        int result = StrReplace(buf, ",", ",\n", len * 2);
         if (result)
         {
             puts("Something went wrong. I have to quit!");
             return -1;
         }
-        end = clock();
-        totalC += end - start;
-        printf("C Runtime in mSecs: %lld\n", end - start);
+        const auto end = std::chrono::high_resolution_clock::now();
+        const auto elapsed = end - start;
+
+        using DurationT = std::chrono::duration<double, std::ratio<1>>;
+
+        const DurationT elapsed_seconds = elapsed;
+        printf("C Runtime: %f\n", elapsed_seconds.count());
         strcpy(fname, v[i]);
         ChangeExtension(fname, "csv");
-        fopen_s(&fp, fname, "w");
+        fp = fopen(fname, "w");
         fwrite(buf, strlen(buf), 1, fp);
         fclose(fp);
     }
-    printf("Total Runtimes\nCPP with std::string: %f\nC with stdlib: %f\n", (float)totalCPP / CLOCKS_PER_SEC, (float)totalC / CLOCKS_PER_SEC);
-    printf("In this example, C was %f times faster than C++\n", (float)(totalCPP / totalC));
-    puts("Press return to continue");
-    getchar();
+    // printf("Total Runtimes\nCPP with std::string: %f\nC with stdlib: %f\n", (float)totalCPP / CLOCKS_PER_SEC, (float)totalC / CLOCKS_PER_SEC);
+    // printf("In this example, C was %f times faster than C++\n", (float)(totalCPP / totalC));
+    // puts("Press return to continue");
+    // getchar();
     return 0;
-}
-
-void CPPReplace(std::string &data)
-{
-    const std::string s = ",";
-    const std::string t = ",\n";
-
-    std::string::size_type n = 0;
-    while ((n = data.find(s, n)) != std::string::npos)
-    {
-        data.replace(n, s.size(), t);
-        n += t.size();
-    }
 }
 
 void GetLen(FILE * fp, int &len)
@@ -88,7 +77,7 @@ void GetLen(FILE * fp, int &len)
     rewind(fp);
 }
 
-void ChangeExtension(char *fname, char *newExt)
+void ChangeExtension(char *fname, const char *newExt)
 {
 #define EVAL_MAX_LEN (300)
 
@@ -115,11 +104,11 @@ void ChangeExtension(char *fname, char *newExt)
     return;
 }
 
-int StrReplace(char *target, const char *needle, const char *replacement, int len)
-{
-    char *buffer = (char*)calloc(1, len);
-    if (!buffer)
-    {
+int StrReplace(char *const target, const char *const needle,
+               const char *const replacement, int len) {
+    char *const buffer = new char[len];
+
+    if (!buffer) {
         puts("Wow! That file's too big for me. Out of memory!");
         return -1;
     }
@@ -129,8 +118,7 @@ int StrReplace(char *target, const char *needle, const char *replacement, int le
     size_t needle_len = strlen(needle);
     size_t repl_len = strlen(replacement);
 
-    while (1)
-    {
+    while (true) {
         const char *p = strstr(tmp, needle);
         if (p == NULL)
         {
@@ -143,7 +131,8 @@ int StrReplace(char *target, const char *needle, const char *replacement, int le
         insert_point += repl_len;
         tmp = p + needle_len;
     }
+
     strcpy(target, buffer);
-    delete(buffer);
+    delete[] buffer;
     return 0;
 }

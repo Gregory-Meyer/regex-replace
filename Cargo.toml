@@ -5,5 +5,3 @@ authors = ["Gregory Meyer <gregjm@umich.edu>"]
 
 [dependencies]
 clap = "2.31"
-itertools = "0.7"
-regex = "0.2"

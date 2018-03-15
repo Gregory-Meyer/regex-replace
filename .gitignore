@@ -2,3 +2,4 @@
 /target
 **/*.rs.bk
 infile.tar.bz2
+infile.txt

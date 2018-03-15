@@ -1,11 +1,7 @@
 extern crate clap;
-extern crate itertools;
-extern crate regex;
 
 use std::error::Error;
 use std::io::{Read, Write};
-
-use itertools::Itertools;
 
 static EXIT_SUCCESS: i32 = 0;
 static EXIT_FAILURE: i32 = 1;
@@ -67,15 +63,17 @@ fn write_buffer(mut file: NamedFile, buffer: &[u8]) {
 }
 
 fn replace(text: &str, to_find: &str, replacement: &str) -> String {
-    let matcher = match regex::Regex::new(to_find) {
-        Ok(m) => m,
-        Err(error) => {
-            eprintln!("error while creating matcher: {}", error.description());
-            std::process::exit(EXIT_FAILURE);
-        }
-    };
+    let mut replaced = String::with_capacity(text.len() * 3 / 2);
 
-    matcher.split(text).join(replacement)
+    for (index, substring) in text.split(to_find).enumerate() {
+        if index != 0 {
+            replaced.push_str(replacement);
+        }
+
+        replaced.push_str(substring);
+    }
+
+    replaced
 }
 
 fn main() {
